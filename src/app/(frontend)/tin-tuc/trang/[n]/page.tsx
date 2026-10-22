@@ -18,7 +18,7 @@ function parsePageNumber(value: string): number | null {
 }
 
 export async function generateStaticParams() {
-  const firstPage = await findPublished('posts', { page: 1, limit: 1 })
+  const firstPage = await findPublished('posts', { page: 1, limit: 10 })
   return Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) => ({
     n: String(index + 2),
   }))
@@ -39,7 +39,7 @@ export default async function PostsPaginationPage({ params }: PostsPaginationPag
   const page = parsePageNumber(n)
   if (page === null) notFound()
 
-  const firstPage = await findPublished('posts', { page: 1, limit: 1 })
+  const firstPage = await findPublished('posts', { page: 1, limit: 10 })
   if (page > firstPage.totalPages) notFound()
 
   const result = await findPublished('posts', {

@@ -24,28 +24,28 @@ function getImageUrl(image: MetadataInput['image']): string | undefined {
 export async function buildMetadata(input: MetadataInput = {}): Promise<Metadata> {
   const settings = await getSiteSettings()
   const defaultSeo = settings.defaultSeo
-  const title = input.title || defaultSeo?.metaTitle || settings.siteName
-  const description = input.description || defaultSeo?.metaDescription || undefined
-  const image =
+  const finalTitle = input.title || defaultSeo?.metaTitle || settings.siteName || 'Trung tâm'
+  const finalDescription = input.description || defaultSeo?.metaDescription || ''
+  const finalImage =
     getImageUrl(input.image) ?? getImageUrl(defaultSeo?.shareImage)
   const url = input.slug ? `/${input.slug.replace(/^\/+/, '')}` : '/'
 
   return {
-    title,
-    description,
+    title: finalTitle,
+    description: finalDescription,
     openGraph: {
-      title,
-      description,
-      images: image ? [{ url: image }] : undefined,
+      title: finalTitle,
+      description: finalDescription,
+      images: finalImage ? [{ url: finalImage }] : undefined,
       url,
       type: 'website',
       locale: 'vi_VN',
     },
     twitter: {
-      card: image ? 'summary_large_image' : 'summary',
-      title,
-      description,
-      images: image ? [image] : undefined,
+      card: finalImage ? 'summary_large_image' : 'summary',
+      title: finalTitle,
+      description: finalDescription,
+      images: finalImage ? [finalImage] : undefined,
     },
   }
 }
