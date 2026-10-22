@@ -63,6 +63,121 @@ const posts = [
   },
 ]
 
+const courses = [
+  {
+    title: 'Toán 10 cơ bản',
+    slug: 'toan-10-co-ban',
+    status: 'published',
+    grade: 'lop-10',
+    subject: 'toan',
+    description: 'Khóa học Toán 10 nền tảng.',
+    duration: '3 tháng',
+    schedule: 'Tối 2-4-6',
+    tuition: 1500000,
+  },
+  {
+    title: 'Toán 11 nâng cao',
+    slug: 'toan-11-nang-cao',
+    status: 'published',
+    grade: 'lop-11',
+    subject: 'toan',
+    tuition: 2000000,
+  },
+  {
+    title: 'Luyện thi đại học',
+    slug: 'luyen-thi-dai-hoc',
+    status: 'published',
+    grade: 'lop-12',
+    subject: 'toan',
+    tuition: null,
+  },
+]
+
+const exams = [
+  {
+    title: 'Kỳ thi Olympic Toán 2026',
+    slug: 'olympic-toan-2026',
+    status: 'published',
+    year: 2026,
+    examStatus: 'sap-dien-ra',
+    audience: 'Học sinh lớp 10-11',
+    schedule: [
+      {
+        label: 'Vòng 1',
+        datetime: '2026-11-15T08:00:00.000Z',
+        location: 'Cơ sở 1',
+      },
+    ],
+    location: 'Hà Nội',
+  },
+  {
+    title: 'Kỳ thi HSG cấp trường 2025',
+    slug: 'hsg-cap-truong-2025',
+    status: 'published',
+    year: 2025,
+    examStatus: 'da-ket-thuc',
+    schedule: [
+      {
+        label: 'Chung kết',
+        datetime: '2025-05-20T08:00:00.000Z',
+        location: 'Cơ sở 1',
+      },
+    ],
+    location: 'Hà Nội',
+    results: { description: 'Đã có kết quả, xem file đính kèm.' },
+  },
+]
+
+const admissions = [
+  {
+    title: 'Tuyển sinh khóa Hè 2026',
+    slug: 'tuyen-sinh-he-2026',
+    status: 'published',
+    admissionStatus: 'dang-mo',
+    deadline: '2026-06-30T23:59:59.000Z',
+    content: lexicalParagraph('Tuyển sinh khóa Hè 2026 tại trung tâm.'),
+  },
+  {
+    title: 'Tuyển sinh khóa Đông 2025',
+    slug: 'tuyen-sinh-dong-2025',
+    status: 'published',
+    admissionStatus: 'da-dong',
+    deadline: '2025-12-31T23:59:59.000Z',
+  },
+]
+
+function lexicalParagraph(text) {
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      direction: null,
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          direction: null,
+          children: [
+            {
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text,
+              type: 'text',
+              version: 1,
+            },
+          ],
+        },
+      ],
+    },
+  }
+}
+
 function getCookieHeader(response) {
   const cookies =
     typeof response.headers.getSetCookie === 'function'
@@ -208,6 +323,29 @@ async function ensurePost(post) {
   return extractDocument(result)
 }
 
+async function ensureRecord(collection, record) {
+  const query = new URLSearchParams({
+    'where[slug][equals]': record.slug,
+    limit: '1',
+  })
+  const result = await request(`/api/${collection}?${query}`)
+  const existing = extractDocs(result)[0]
+
+  if (existing) {
+    const updated = await request(`/api/${collection}/${existing.id}`, {
+      method: 'PATCH',
+      body: record,
+    })
+    return extractDocument(updated)
+  }
+
+  const created = await request(`/api/${collection}`, {
+    method: 'POST',
+    body: record,
+  })
+  return extractDocument(created)
+}
+
 async function ensureSiteSettings() {
   const current = await request('/api/globals/siteSettings')
   const exists = Boolean(current && typeof current === 'object' && current.siteName)
@@ -243,6 +381,18 @@ async function main() {
   for (const post of posts) {
     savedPosts.push(await ensurePost(post))
   }
+  const savedCourses = []
+  for (const course of courses) {
+    savedCourses.push(await ensureRecord('courses', course))
+  }
+  const savedExams = []
+  for (const exam of exams) {
+    savedExams.push(await ensureRecord('exams', exam))
+  }
+  const savedAdmissions = []
+  for (const admission of admissions) {
+    savedAdmissions.push(await ensureRecord('admissions', admission))
+  }
 
   console.log(
     `siteSettings id: ${
@@ -255,6 +405,15 @@ async function main() {
     console.log(`post id: ${post.id}`)
   }
   console.log(`Bài 1 title hiện tại: ${savedPosts[0].title}`)
+  for (const course of savedCourses) {
+    console.log(`course id: ${course.id}, slug: ${course.slug}`)
+  }
+  for (const exam of savedExams) {
+    console.log(`exam id: ${exam.id}, slug: ${exam.slug}`)
+  }
+  for (const admission of savedAdmissions) {
+    console.log(`admission id: ${admission.id}, slug: ${admission.slug}`)
+  }
 }
 
 main().catch((error) => {
