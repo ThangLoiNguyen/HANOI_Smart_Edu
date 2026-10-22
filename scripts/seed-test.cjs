@@ -1,5 +1,6 @@
 const path = require('node:path')
 require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') })
+const { Client } = require('pg')
 
 const BASE_URL = 'http://localhost:3000'
 const ADMIN_EMAIL = 'admin@test.local'
@@ -145,6 +146,101 @@ const admissions = [
     deadline: '2025-12-31T23:59:59.000Z',
   },
 ]
+
+const achievements = [
+  {
+    title: 'Nguyễn Mai Anh - Giải nhất Toán',
+    slug: 'nguyen-mai-anh-giai-nhat-toan',
+    status: 'published',
+    studentName: 'Nguyễn Mai Anh',
+    school: 'Trường THPT Hà Nội - Amsterdam',
+    className: '10A1',
+    award: 'Giải nhất Toán cấp thành phố',
+    examName: 'Kỳ thi HSG Toán Hà Nội',
+    year: 2026,
+    awardLevel: 'nhat',
+    note: 'Nỗ lực học tập bền bỉ và đạt thành tích xuất sắc.',
+  },
+  {
+    title: 'Trần Minh Quân - Giải nhì Vật lý',
+    slug: 'tran-minh-quan-giai-nhi-vat-ly',
+    status: 'published',
+    studentName: 'Trần Minh Quân',
+    school: 'Trường THPT Chu Văn An',
+    className: '11A2',
+    award: 'Giải nhì Vật lý cấp thành phố',
+    examName: 'Kỳ thi HSG Vật lý Hà Nội',
+    year: 2026,
+    awardLevel: 'nhi',
+  },
+  {
+    title: 'Lê Phương Linh - Giải ba Ngữ văn',
+    slug: 'le-phuong-linh-giai-ba-ngu-van',
+    status: 'published',
+    studentName: 'Lê Phương Linh',
+    school: 'Trường THPT Kim Liên',
+    className: '10C1',
+    award: 'Giải ba Ngữ văn cấp quận',
+    examName: 'Kỳ thi HSG Ngữ văn Đống Đa',
+    year: 2025,
+    awardLevel: 'ba',
+  },
+  {
+    title: 'Phạm Đức Huy - Giải khuyến khích Tiếng Anh',
+    slug: 'pham-duc-huy-giai-khuyen-khich-tieng-anh',
+    status: 'published',
+    studentName: 'Phạm Đức Huy',
+    school: 'Trường THPT Trần Phú',
+    className: '12A3',
+    award: 'Giải khuyến khích Tiếng Anh cấp thành phố',
+    examName: 'Kỳ thi HSG Tiếng Anh Hà Nội',
+    year: 2025,
+    awardLevel: 'khuyen-khich',
+  },
+  {
+    title: 'Vũ Khánh Ngọc - Giải khác cấp trường',
+    slug: 'vu-khanh-ngoc-giai-khac-cap-truong',
+    status: 'published',
+    studentName: 'Vũ Khánh Ngọc',
+    school: 'Trường THPT Đống Đa',
+    className: '11A4',
+    award: 'Giải sáng tạo cấp trường',
+    examName: 'Ngày hội sáng tạo trẻ',
+    year: 2025,
+    awardLevel: 'giai-khac',
+  },
+]
+
+const albums = [
+  {
+    title: 'Ngày hội khai giảng 2026',
+    slug: 'ngay-hoi-khai-giang-2026',
+    status: 'published',
+    takenAt: '2026-09-05T00:00:00.000Z',
+    photos: [
+      { key: 'khai-giang-2026-1', alt: 'Ngày hội khai giảng 2026 - Ảnh 1', caption: 'Đón học sinh trong ngày khai giảng' },
+      { key: 'khai-giang-2026-2', alt: 'Ngày hội khai giảng 2026 - Ảnh 2', caption: 'Phát biểu chào mừng năm học mới' },
+      { key: 'khai-giang-2026-3', alt: 'Ngày hội khai giảng 2026 - Ảnh 3', caption: 'Học sinh tham gia hoạt động tập thể' },
+    ],
+  },
+  {
+    title: 'Hoạt động ngoại khóa mùa hè 2025',
+    slug: 'ngoai-khoa-mua-he-2025',
+    status: 'published',
+    takenAt: '2025-07-12T00:00:00.000Z',
+    photos: [
+      { key: 'ngoai-khoa-2025-1', alt: 'Ngoại khóa mùa hè 2025 - Ảnh 1', caption: 'Khởi động chương trình ngoại khóa' },
+      { key: 'ngoai-khoa-2025-2', alt: 'Ngoại khóa mùa hè 2025 - Ảnh 2', caption: 'Trò chơi đồng đội' },
+      { key: 'ngoai-khoa-2025-3', alt: 'Ngoại khóa mùa hè 2025 - Ảnh 3', caption: 'Các nhóm cùng hoàn thành thử thách' },
+      { key: 'ngoai-khoa-2025-4', alt: 'Ngoại khóa mùa hè 2025 - Ảnh 4', caption: 'Kết thúc hoạt động trong ngày' },
+    ],
+  },
+]
+
+const mediaDatabase = new Client({
+  connectionString: process.env.DATABASE_URI_UNPOOLED || process.env.DATABASE_URI,
+})
+let mediaDatabaseConnected = false
 
 function lexicalParagraph(text) {
   return {
@@ -346,6 +442,43 @@ async function ensureRecord(collection, record) {
   return extractDocument(created)
 }
 
+async function ensurePlaceholderMedia(photo) {
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">',
+    '<rect width="1200" height="800" fill="#e0f2fe"/>',
+    '<circle cx="600" cy="400" r="190" fill="#fff7ed"/>',
+    '<text x="600" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="700" fill="#1e3a8a">HSE</text>',
+    '</svg>',
+  ].join('')
+  if (!mediaDatabaseConnected) {
+    await mediaDatabase.connect()
+    mediaDatabaseConnected = true
+  }
+  const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`
+  const existing = await mediaDatabase.query(
+    'SELECT id FROM media WHERE alt = $1 LIMIT 1',
+    [photo.alt],
+  )
+  const filename = `test-placeholder-${photo.key}.svg`
+  const media =
+    existing.rowCount > 0
+      ? await mediaDatabase.query(
+          `UPDATE media
+           SET caption = $2, url = $3, filename = $4, mime_type = 'image/svg+xml',
+             filesize = $5, width = 1200, height = 800, updated_at = NOW()
+           WHERE id = $1
+           RETURNING id`,
+          [existing.rows[0].id, photo.caption, dataUrl, filename, Buffer.byteLength(svg)],
+        )
+      : await mediaDatabase.query(
+          `INSERT INTO media (alt, caption, url, filename, mime_type, filesize, width, height)
+           VALUES ($1, $2, $3, $4, 'image/svg+xml', $5, 1200, 800)
+           RETURNING id`,
+          [photo.alt, photo.caption, dataUrl, filename, Buffer.byteLength(svg)],
+        )
+  return request(`/api/media/${media.rows[0].id}`)
+}
+
 async function ensureSiteSettings() {
   const current = await request('/api/globals/siteSettings')
   const exists = Boolean(current && typeof current === 'object' && current.siteName)
@@ -393,6 +526,10 @@ async function main() {
   for (const admission of admissions) {
     savedAdmissions.push(await ensureRecord('admissions', admission))
   }
+  const savedAchievements = []
+  for (const achievement of achievements) {
+    savedAchievements.push(await ensureRecord('achievements', achievement))
+  }
 
   console.log(
     `siteSettings id: ${
@@ -414,9 +551,31 @@ async function main() {
   for (const admission of savedAdmissions) {
     console.log(`admission id: ${admission.id}, slug: ${admission.slug}`)
   }
+  for (const achievement of savedAchievements) {
+    console.log(`achievement id: ${achievement.id}, slug: ${achievement.slug}`)
+  }
+
+  const savedAlbums = []
+  for (const album of albums) {
+    const photos = []
+    for (const photo of album.photos) {
+      const media = await ensurePlaceholderMedia(photo)
+      photos.push({ image: media.id, caption: photo.caption })
+    }
+    const cover = photos[0]?.image
+    savedAlbums.push(await ensureRecord('albums', { ...album, cover, photos }))
+  }
+
+  for (const album of savedAlbums) {
+    console.log(`album id: ${album.id}, slug: ${album.slug}`)
+  }
 }
 
-main().catch((error) => {
-  console.error('Seed failed:', error instanceof Error ? error.message : error)
-  process.exitCode = 1
-})
+main()
+  .catch((error) => {
+    console.error('Seed failed:', error instanceof Error ? error.message : error)
+    process.exitCode = 1
+  })
+  .finally(async () => {
+    if (mediaDatabaseConnected) await mediaDatabase.end()
+  })
