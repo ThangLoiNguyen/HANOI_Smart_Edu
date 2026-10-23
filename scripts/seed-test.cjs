@@ -483,9 +483,9 @@ async function ensureSiteSettings() {
   const current = await request('/api/globals/siteSettings')
   const exists = Boolean(current && typeof current === 'object' && current.siteName)
   const values = {
-    siteName: 'Trung tâm Hà Nội Smart Edu',
+    siteName: 'HANOI Smart Edu',
     defaultSeo: {
-      metaTitle: 'Trung tâm Hà Nội Smart Edu',
+      metaTitle: 'HANOI Smart Edu',
       metaDescription: 'Trung tâm luyện thi uy tín tại Hà Nội',
     },
   }
