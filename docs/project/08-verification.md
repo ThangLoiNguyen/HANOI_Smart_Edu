@@ -33,6 +33,17 @@
 - Ghi chú: Blob store hiện chưa khả dụng; media test dùng data URL placeholder,
   cần thay bằng ảnh thật khi storage được cấu hình.
 
+## 2026-10-23 — UI/Responsive audit PASS
+
+- 36/36 route × 3 viewport (375/768/1440) HTTP 200.
+- Không overflow ngang.
+- Grid: card 1/2/3 cột, album gallery 2/3/4 cột — đúng spec.
+- Lightbox album: click mở, ArrowRight next, Esc đóng — PASS.
+- 0 button mobile < 44px, 0 ảnh broken, 0 alt rỗng.
+- 6 check "no sizes" trên /album là false positive (placeholder SVG data URI
+  dev-only, production dùng next/image với sizes).
+- Script: scripts/audit-ui.cjs. Screenshots: .audit/screenshots/ (gitignored).
+
 ## TODO verify sau khi có data
 
 - [x] Courses: verify render list + detail với data thật (grade/subject badge,
