@@ -167,3 +167,11 @@ export const CONTACT_LABELS = {
   branchInfo: 'Thông tin liên hệ',
   noBranch: 'Thông tin cơ sở đang được cập nhật.',
 } as const
+
+export const SEO_LABELS = {
+  notFoundTitle: '404 - Không tìm thấy trang',
+  notFoundHeading: 'Không tìm thấy trang',
+  notFoundDescription: 'Trang bạn tìm kiếm có thể đã bị xoá hoặc đường dẫn không đúng.',
+  homeButton: 'Về trang chủ',
+  newsButton: 'Xem tin tức',
+} as const
