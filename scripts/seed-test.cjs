@@ -237,6 +237,105 @@ const albums = [
   },
 ]
 
+const documents = [
+  {
+    title: 'Tài liệu ôn tập Toán 10',
+    slug: 'tai-lieu-on-tap-toan-10',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    type: 'tai-lieu',
+    grade: 'lop-10',
+    subject: 'toan',
+    year: 2026,
+    externalLink: 'https://example.com/tai-lieu-toan-10',
+  },
+  {
+    title: 'Đề thi thử Toán 11',
+    slug: 'de-thi-thu-toan-11',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    type: 'de-thi',
+    grade: 'lop-11',
+    subject: 'toan',
+    year: 2026,
+    externalLink: 'https://example.com/de-thi-toan-11',
+  },
+  {
+    title: 'Đáp án Tiếng Anh lớp 12',
+    slug: 'dap-an-tieng-anh-12',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    type: 'dap-an',
+    grade: 'lop-12',
+    subject: 'tieng-anh',
+    year: 2025,
+    externalLink: 'https://example.com/dap-an-tieng-anh-12',
+  },
+]
+
+const branches = [
+  {
+    title: 'Cơ sở Cầu Giấy',
+    slug: 'co-so-cau-giay',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    order: 1,
+    address: 'Số 10 phố Duy Tân, quận Cầu Giấy, Hà Nội',
+    phone: '0912.345.678',
+    workingHours: '08:00–20:00, Thứ 2–Chủ nhật',
+    googleMapsUrl: 'https://maps.google.com/?q=Cau+Giay+Ha+Noi',
+  },
+  {
+    title: 'Cơ sở Đống Đa',
+    slug: 'co-so-dong-da',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    order: 2,
+    address: 'Số 20 phố Tây Sơn, quận Đống Đa, Hà Nội',
+    phone: '0913.456.789',
+    workingHours: '08:00–20:00, Thứ 2–Chủ nhật',
+    googleMapsUrl: 'https://maps.google.com/?q=Dong+Da+Ha+Noi',
+  },
+]
+
+const pages = [
+  {
+    title: 'Giới thiệu HANOI SMART EDU',
+    slug: 'gioi-thieu',
+    status: 'published',
+    publishedAt: new Date().toISOString(),
+    layout: [
+      {
+        blockType: 'textBlock',
+        heading: 'Đồng hành cùng học sinh',
+        body: lexicalParagraph('HANOI SMART EDU xây dựng môi trường học tập tích cực, giúp mỗi học sinh phát huy tiềm năng.'),
+      },
+      {
+        blockType: 'statsBlock',
+        items: [
+          { label: 'Năm đồng hành', value: '10+' },
+          { label: 'Học viên', value: '2.000+' },
+          { label: 'Cơ sở', value: '2' },
+        ],
+      },
+      {
+        blockType: 'teamBlock',
+        members: [
+          { name: 'Nguyễn Minh Anh', role: 'Giám đốc chuyên môn', bio: 'Đồng hành cùng đội ngũ giáo viên và học sinh.' },
+          { name: 'Trần Thu Hà', role: 'Giáo viên Toán', bio: 'Tập trung xây dựng nền tảng kiến thức vững chắc.' },
+        ],
+      },
+      {
+        blockType: 'ctaBlock',
+        heading: 'Sẵn sàng bắt đầu?',
+        description: 'Liên hệ với trung tâm để được tư vấn lộ trình phù hợp.',
+        buttonLabel: 'Xem các khóa học',
+        buttonLink: '/khoa-hoc',
+      },
+    ],
+  },
+]
+
 const mediaDatabase = new Client({
   connectionString: process.env.DATABASE_URI_UNPOOLED || process.env.DATABASE_URI,
 })
@@ -530,6 +629,9 @@ async function main() {
   for (const achievement of achievements) {
     savedAchievements.push(await ensureRecord('achievements', achievement))
   }
+  const savedDocuments = await seedDocuments()
+  const savedBranches = await seedBranches()
+  const savedPages = await seedPages()
 
   console.log(
     `siteSettings id: ${
@@ -569,6 +671,39 @@ async function main() {
   for (const album of savedAlbums) {
     console.log(`album id: ${album.id}, slug: ${album.slug}`)
   }
+  for (const document of savedDocuments) {
+    console.log(`document id: ${document.id}, slug: ${document.slug}`)
+  }
+  for (const branch of savedBranches) {
+    console.log(`branch id: ${branch.id}, slug: ${branch.slug}`)
+  }
+  for (const page of savedPages) {
+    console.log(`page id: ${page.id}, slug: ${page.slug}`)
+  }
+}
+
+async function seedDocuments() {
+  const saved = []
+  for (const document of documents) {
+    saved.push(await ensureRecord('documents', document))
+  }
+  return saved
+}
+
+async function seedBranches() {
+  const saved = []
+  for (const branch of branches) {
+    saved.push(await ensureRecord('branches', branch))
+  }
+  return saved
+}
+
+async function seedPages() {
+  const saved = []
+  for (const page of pages) {
+    saved.push(await ensureRecord('pages', page))
+  }
+  return saved
 }
 
 main()

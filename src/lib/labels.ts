@@ -83,3 +83,53 @@ export const PAGINATION_LABELS = {
   page: 'Trang',
   morePages: 'Các trang khác',
 } as const
+
+export const DOCUMENTS_LABELS = {
+  title: 'Tài liệu & đề thi',
+  brandName: 'HANOI SMART EDU',
+  type: 'Loại tài liệu',
+  grade: 'Cấp lớp',
+  subject: 'Môn học',
+  year: 'Năm',
+  all: 'Tất cả',
+  types: {
+    'tai-lieu': 'Tài liệu',
+    'de-thi': 'Đề thi',
+    'dap-an': 'Đáp án',
+  },
+  grades: {
+    'lop-10': 'Lớp 10',
+    'lop-11': 'Lớp 11',
+    'lop-12': 'Lớp 12',
+  },
+  subjects: {
+    toan: 'Toán',
+    'ngu-van': 'Ngữ văn',
+    'tieng-anh': 'Tiếng Anh',
+  },
+  download: 'Tải tài liệu',
+  openLink: 'Mở liên kết',
+  updated: 'Tài liệu đang được cập nhật.',
+  noResults: 'Không có tài liệu phù hợp với bộ lọc.',
+} as const
+
+export const BRANCHES_LABELS = {
+  title: 'Cơ sở',
+  brandName: 'HANOI SMART EDU',
+  address: 'Địa chỉ',
+  phone: 'Điện thoại',
+  workingHours: 'Giờ làm việc',
+  viewMap: 'Xem bản đồ',
+  call: 'Gọi điện',
+  updated: 'Thông tin cơ sở đang được cập nhật.',
+  imageFallback: 'Cơ sở HANOI SMART EDU',
+} as const
+
+export const PAGES_LABELS = {
+  brandName: 'HANOI SMART EDU',
+  contactSlug: 'lien-he',
+  contactTitle: 'Liên hệ',
+  learnMore: 'Tìm hiểu thêm',
+  imageFallback: 'Hình ảnh giới thiệu',
+  statsAriaLabel: 'Số liệu trung tâm',
+} as const

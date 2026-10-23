@@ -10,13 +10,18 @@ const VIEWPORTS = [
   { width: 1440, height: 900 },
 ]
 const ROUTES = [
+  '/tai-lieu',
+  '/co-so',
+  '/gioi-thieu',
   { path: '/khoa-hoc', detail: '/khoa-hoc/toan-10-co-ban' },
   { path: '/tuyen-sinh', detail: '/tuyen-sinh/tuyen-sinh-he-2026' },
   { path: '/thanh-tich', detail: '/thanh-tich/nguyen-mai-anh-giai-nhat-toan' },
   { path: '/ky-thi', detail: '/ky-thi/olympic-toan-2026' },
   { path: '/tin-tuc', detail: '/tin-tuc/khai-giang-toan-10-2026' },
   { path: '/album', detail: '/album/ngay-hoi-khai-giang-2026' },
-].flatMap(({ path: listPath, detail }) => [listPath, detail])
+].flatMap((route) =>
+  typeof route === 'string' ? [route] : [route.path, route.detail],
+)
 
 const SCREENSHOT_DIR = path.join(process.cwd(), '.audit', 'screenshots')
 const failures = []
@@ -171,7 +176,9 @@ async function auditRoute(browser, route, viewport) {
       total: metrics.images.length,
       broken: metrics.images.filter((image) => image.naturalWidth <= 0),
       missingAlt: metrics.images.filter((image) => !image.alt),
-      missingSizes: metrics.images.filter((image) => !image.sizes),
+      missingSizes: metrics.images.filter(
+        (image) => !image.sizes && !image.src.startsWith('data:'),
+      ),
     }
     if (viewport.width === 375) {
       entry.mobileButtonCount = metrics.buttons.length
