@@ -33,3 +33,6 @@
 
 - [ ] TD-10: Vercel Blob store không t?n t?i ? local dev — upload test fail 500. Trên production có BLOB_READ_WRITE_TOKEN th?t ? s? pass. C?n test upload th?t khi deploy preview (P24).
 - [ ] TD-11: payload.config.ts có cast sharp do mismatch version (sharp@0.35.5 direct vs Payload expects sharp@0.34.5). Khi upgrade Payload, ki?m tra l?i cast còn c?n không.
+
+- [ ] TD-12: metadataBase chua config trong layout metadata. OG/Twitter images dùng relative URL thay vì absolute ? m?t s? social platform không render preview. Fix ? P23.
+- [ ] TD-13: Email notification cho submissions chua có — spec 06-open-questions #6 chua ch?t d?a ch? nh?n. Ð?i khách tr? l?i r?i làm.
