@@ -17,7 +17,10 @@ import Exams from '@/collections/exams'
 import Media from '@/collections/media'
 import Pages from '@/collections/pages'
 import Posts from '@/collections/Posts'
+import PlacementQuestions from '@/collections/placement-questions'
+import Schedules from '@/collections/schedules'
 import Submissions from '@/collections/submissions'
+import Transactions from '@/collections/transactions'
 import Users from '@/collections/users'
 import Homepage from '@/globals/homepage'
 import Navigation from '@/globals/navigation'
@@ -47,12 +50,15 @@ export default buildConfig({
     Documents,
     Courses,
     Exams,
+    PlacementQuestions,
+    Schedules,
     Branches,
     Admissions,
     Achievements,
     Albums,
     Pages,
     Submissions,
+    Transactions,
   ],
   editor: lexicalEditor(),
   globals: [SiteSettings, Navigation, Homepage],

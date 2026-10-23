@@ -4,6 +4,7 @@ import { Be_Vietnam_Pro } from 'next/font/google'
 import type { ReactNode } from 'react'
 
 import { Footer } from '@/components/layout/footer'
+import { FloatingContact } from '@/components/layout/floating-contact'
 import { Header } from '@/components/layout/header'
 import { NotificationPopup } from '@/components/layout/notification-popup'
 import { PreviewBanner } from '@/components/layout/preview-banner'
@@ -64,6 +65,11 @@ export default async function FrontendLayout({ children }: FrontendLayoutProps) 
         <main id="main-content">{children}</main>
         <Footer menu={navigation.footerMenu ?? []} settings={settings} />
         {popupIsCurrent && popup ? <NotificationPopup data={popup} /> : null}
+        <FloatingContact
+          hotline={settings.hotline}
+          zaloUrl={settings.zaloUrl}
+          facebookUrl={settings.facebookUrl}
+        />
       </body>
     </html>
   )

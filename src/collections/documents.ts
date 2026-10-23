@@ -14,6 +14,17 @@ import { publishedAtField } from '@/lib/fields/published-at-field'
 import { seoField } from '@/lib/fields/seo-field'
 import { slugField } from '@/lib/fields/slug-field'
 import { statusField } from '@/lib/fields/status-field'
+import {
+  DOCUMENT_CATEGORY_OPTIONS,
+  DOCUMENT_GRADE_OPTIONS,
+  DOCUMENT_LEVELS,
+  getDocumentTaxonomySiblingData,
+  getDocumentCategories,
+  getDocumentGradeValues,
+  isValidDocumentCategory,
+  type DocumentCategory,
+  type DocumentGrade,
+} from '@/lib/document-taxonomy'
 import { revalidateCollection } from '@/lib/revalidate'
 
 type StaffRole = 'admin' | 'editor'
@@ -127,7 +138,7 @@ const revalidateDeletedDocument: CollectionAfterDeleteHook<DocumentRecord> = ({ 
 const Documents: CollectionConfig = {
   slug: 'documents',
   admin: {
-    defaultColumns: ['title', 'type', 'grade', 'subject', 'year', 'status'],
+    defaultColumns: ['title', 'level', 'grade', 'category', 'type', 'status'],
     group: FIELD_LABELS.documents.adminGroup,
     useAsTitle: 'title',
   },
@@ -171,16 +182,64 @@ const Documents: CollectionConfig = {
               ],
             },
             {
+              name: 'level',
+              type: 'select',
+              label: FIELD_LABELS.documents.level,
+              required: true,
+              options: DOCUMENT_LEVELS.map(({ label, value }) => ({ label, value })),
+            },
+            {
               name: 'grade',
               type: 'select',
               label: FIELD_LABELS.documents.grade,
               required: true,
-              // TODO: Replace placeholders after the grade list is decided in 07-open-questions.md.
-              options: [
-                { label: FIELD_LABELS.documents.grade10, value: 'lop-10' },
-                { label: FIELD_LABELS.documents.grade11, value: 'lop-11' },
-                { label: FIELD_LABELS.documents.grade12, value: 'lop-12' },
-              ],
+              options: DOCUMENT_GRADE_OPTIONS,
+              filterOptions: ({ options, siblingData }) => {
+                const validGrades = getDocumentGradeValues(siblingData.level)
+                return options.filter((option) =>
+                  validGrades.includes(
+                    (typeof option === 'string' ? option : option.value) as DocumentGrade,
+                  ),
+                )
+              },
+              validate: (
+                value: string | null | undefined,
+                options: { siblingData: unknown },
+              ) => {
+                const { level } = getDocumentTaxonomySiblingData(options.siblingData)
+                return (
+                  value == null ||
+                  getDocumentGradeValues(level).includes(value as DocumentGrade) ||
+                  FIELD_LABELS.documents.invalidGrade
+                )
+              },
+            },
+            {
+              name: 'category',
+              type: 'select',
+              label: FIELD_LABELS.documents.category,
+              required: true,
+              options: DOCUMENT_CATEGORY_OPTIONS,
+              filterOptions: ({ options, siblingData }) => {
+                if (!siblingData.level || !siblingData.grade) return []
+                const validCategories = getDocumentCategories(siblingData.level, siblingData.grade)
+                return options.filter((option) =>
+                  validCategories.includes(
+                    (typeof option === 'string' ? option : option.value) as DocumentCategory,
+                  ),
+                )
+              },
+              validate: (
+                value: string | null | undefined,
+                options: { siblingData: unknown },
+              ) => {
+                const { level, grade } = getDocumentTaxonomySiblingData(options.siblingData)
+                return (
+                  value == null ||
+                  isValidDocumentCategory(level, grade, value) ||
+                  FIELD_LABELS.documents.invalidCategory
+                )
+              },
             },
             {
               name: 'subject',

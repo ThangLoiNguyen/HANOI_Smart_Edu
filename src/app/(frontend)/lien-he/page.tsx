@@ -13,7 +13,12 @@ export const metadata: Metadata = {
   title: CONTACT_LABELS.title,
 }
 
-export default async function ContactPage() {
+type ContactPageProps = {
+  searchParams: Promise<{ course?: string | string[]; schedule?: string | string[] }>
+}
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const params = await searchParams
   const [coursesResult, branchesResult, siteSettings] = await Promise.all([
     findPublished('courses', { limit: 200, pagination: false, sort: 'title' }),
     findPublished('branches', { limit: 200, pagination: false, sort: 'order,title' }),
@@ -21,6 +26,10 @@ export default async function ContactPage() {
   ])
   const courses = coursesResult.docs.map(({ id, title }) => ({ id, title }))
   const branches = branchesResult.docs.map(({ id, title }) => ({ id, title }))
+  const courseSlug = typeof params.course === 'string' ? params.course : ''
+  const scheduleValue = typeof params.schedule === 'string' ? params.schedule : ''
+  const initialCourseId = coursesResult.docs.find((course) => course.slug === courseSlug)?.id ?? null
+  const scheduleId = /^\d+$/.test(scheduleValue) ? Number(scheduleValue) : null
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -36,7 +45,14 @@ export default async function ContactPage() {
       </h1>
       <div className="grid items-start gap-8 lg:grid-cols-5">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 lg:col-span-3">
-          <ContactForm branches={branches} courses={courses} />
+          <ContactForm
+            branches={branches}
+            courses={courses}
+            hotline={siteSettings.hotline}
+            zaloUrl={siteSettings.zaloUrl}
+            initialCourseId={initialCourseId}
+            scheduleId={scheduleId}
+          />
         </div>
         <div className="lg:col-span-2">
           <ContactInfo branch={branchesResult.docs[0]} siteSettings={siteSettings} />

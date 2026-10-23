@@ -7,6 +7,8 @@
 | Xóa nội dung | Mọi nội dung | Chỉ nội dung do mình tạo |
 | Tải lên/quản lý media | ✅ | ✅ |
 | Xem/xử lý liên hệ, tư vấn | ✅ | ✅ |
+| Tạo/sửa lịch khai giảng | ✅ | ✅ |
+| Tạo/sửa ngân hàng câu hỏi đầu vào | ✅ | ✅ |
 | Sửa homepage | ✅ | ✅ |
 | Sửa siteSettings, navigation | ✅ | ❌ |
 | Tạo/khóa tài khoản nhân viên | ✅ | ❌ |
@@ -18,3 +20,6 @@
 
 ## Kỹ thuật
 - `delete` access control của editor phải đọc `createdBy` để so sánh.
+- Lịch khai giảng public-read; tạo/sửa cần nhân viên, editor chỉ xóa lịch do mình tạo.
+- `placement-questions` không public-read qua Payload API; server actions chỉ công khai câu hỏi và đánh giá đáp án sau khi trả lời.
+- Submissions (kể cả đăng ký từ test đầu vào) vẫn tuyệt đối không public read.

@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import type { GlobalSlug, Payload, Where } from 'payload'
 
 import config from '@/payload.config'
+import type { Course, Document, Exam, Post } from '@/payload-types'
 
 let payloadClientPromise: Promise<Payload> | undefined
 
@@ -135,4 +136,46 @@ export async function getGlobal<TSlug extends GlobalSlug>(slug: TSlug) {
   )
 
   return getCachedGlobal()
+}
+
+export type SearchResults = {
+  posts: Post[]
+  courses: Course[]
+  documents: Document[]
+  exams: Exam[]
+}
+
+export async function searchContent(query: string): Promise<SearchResults> {
+  const term = query.trim()
+  if (!term) return { posts: [], courses: [], documents: [], exams: [] }
+
+  const [posts, courses, documents, exams] = await Promise.all([
+    findPublished('posts', {
+      where: { or: [{ title: { like: term } }, { excerpt: { like: term } }] },
+      limit: 100,
+      pagination: false,
+    }),
+    findPublished('courses', {
+      where: { or: [{ title: { like: term } }, { description: { like: term } }] },
+      limit: 100,
+      pagination: false,
+    }),
+    findPublished('documents', {
+      where: { title: { like: term } },
+      limit: 100,
+      pagination: false,
+    }),
+    findPublished('exams', {
+      where: { title: { like: term } },
+      limit: 100,
+      pagination: false,
+    }),
+  ])
+
+  return {
+    posts: posts.docs,
+    courses: courses.docs,
+    documents: documents.docs,
+    exams: exams.docs,
+  }
 }

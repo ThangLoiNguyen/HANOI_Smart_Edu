@@ -67,7 +67,7 @@ const validateSubmission: CollectionBeforeValidateHook<SubmissionDocument> = ({
 const Submissions: CollectionConfig = {
   slug: 'submissions',
   admin: {
-    defaultColumns: ['fullName', 'phone', 'email', 'processStatus', 'createdAt'],
+    defaultColumns: ['fullName', 'phone', 'email', 'interestedCourse', 'scheduleId', 'processStatus', 'createdAt'],
     group: FIELD_LABELS.submissions.adminGroup,
     useAsTitle: 'fullName',
   },
@@ -97,7 +97,6 @@ const Submissions: CollectionConfig = {
       name: 'email',
       type: 'email',
       label: FIELD_LABELS.submissions.email,
-      required: true,
     },
     {
       name: 'message',
@@ -109,6 +108,12 @@ const Submissions: CollectionConfig = {
       type: 'relationship',
       relationTo: 'courses',
       label: FIELD_LABELS.submissions.interestedCourse,
+    },
+    {
+      name: 'scheduleId',
+      type: 'relationship',
+      relationTo: 'schedules',
+      label: FIELD_LABELS.submissions.scheduleId,
     },
     {
       name: 'branch',

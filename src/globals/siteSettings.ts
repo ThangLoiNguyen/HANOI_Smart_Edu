@@ -92,6 +92,21 @@ const SiteSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'bankInfo',
+      type: 'group',
+      label: FIELD_LABELS.globals.bankInfo,
+      fields: [
+        { name: 'bankId', type: 'text', label: FIELD_LABELS.globals.bankId, required: true },
+        { name: 'accountNo', type: 'text', label: FIELD_LABELS.globals.accountNo, required: true },
+        {
+          name: 'accountName',
+          type: 'text',
+          label: FIELD_LABELS.globals.accountName,
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'footerContent',
       type: 'richText',
       label: FIELD_LABELS.globals.footerContent,

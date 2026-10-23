@@ -40,15 +40,15 @@ export function MobileMenu({ items, hotline }: MobileMenuProps) {
           <nav aria-label={LAYOUT_LABELS.menu} className="mx-auto flex max-w-7xl flex-col">
             {items.map((item) =>
               item.children.length > 0 ? (
-                <details className="border-b border-slate-100" key={`${item.href}-${item.label}`}>
+                <details className="group border-b border-slate-100" key={`${item.href}-${item.label}`}>
                   <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between py-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
                     {item.label}
-                    <ChevronDown />
+                    <ChevronDown className="transition-transform duration-150 group-open:rotate-180" />
                   </summary>
                   <div className="pb-2 pl-4">
                     {item.children.map((child) => (
                       <Link
-                        className="flex min-h-11 items-center text-sm font-medium text-slate-600"
+                        className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
                         href={child.href}
                         key={`${child.href}-${child.label}`}
                         onClick={() => setOpen(false)}
@@ -107,9 +107,9 @@ function CloseIcon() {
   )
 }
 
-function ChevronDown() {
+function ChevronDown({ className = '' }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className={`h-4 w-4 ${className}`} fill="none" viewBox="0 0 24 24">
       <path d="m6 9 6 6 6-6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
     </svg>
   )

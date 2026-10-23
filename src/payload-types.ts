@@ -74,12 +74,15 @@ export interface Config {
     documents: Document;
     courses: Course;
     exams: Exam;
+    'placement-questions': PlacementQuestion;
+    schedules: Schedule;
     branches: Branch;
     admissions: Admission;
     achievements: Achievement;
     albums: Album;
     pages: Page;
     submissions: Submission;
+    transactions: Transaction;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -94,12 +97,15 @@ export interface Config {
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
     exams: ExamsSelect<false> | ExamsSelect<true>;
+    'placement-questions': PlacementQuestionsSelect<false> | PlacementQuestionsSelect<true>;
+    schedules: SchedulesSelect<false> | SchedulesSelect<true>;
     branches: BranchesSelect<false> | BranchesSelect<true>;
     admissions: AdmissionsSelect<false> | AdmissionsSelect<true>;
     achievements: AchievementsSelect<false> | AchievementsSelect<true>;
     albums: AlbumsSelect<false> | AlbumsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     submissions: SubmissionsSelect<false> | SubmissionsSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -283,7 +289,9 @@ export interface Document {
   status?: ('draft' | 'published') | null;
   publishedAt?: string | null;
   type: 'tai-lieu' | 'de-thi' | 'dap-an';
-  grade: 'lop-10' | 'lop-11' | 'lop-12';
+  level: 'tieu-hoc' | 'thcs';
+  grade: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+  category: 'gk1' | 'ck1' | 'gk2' | 'ck2' | 'on-thi-truong-chon' | 'on-thi-chuyen-toan';
   subject: 'toan' | 'ngu-van' | 'tieng-anh';
   year: number;
   featuredImage?: (number | null) | Media;
@@ -393,6 +401,23 @@ export interface Exam {
   slug?: string | null;
   status?: ('draft' | 'published') | null;
   publishedAt?: string | null;
+  level: 'tieu-hoc' | 'thcs';
+  grade: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+  category: 'gk1' | 'ck1' | 'gk2' | 'ck2' | 'on-thi-truong-chon' | 'on-thi-chuyen-toan';
+  isPremium?: boolean | null;
+  price?: number | null;
+  durationMinutes?: number | null;
+  examContent?:
+    | {
+        question: string;
+        answers: {
+          answer: string;
+          id?: string | null;
+        }[];
+        correctIndex: '0' | '1' | '2' | '3';
+        id?: string | null;
+      }[]
+    | null;
   featuredImage?: (number | null) | Media;
   year: number;
   audience?: string | null;
@@ -432,6 +457,44 @@ export interface Exam {
     metaDescription?: string | null;
     shareImage?: (number | null) | Media;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "placement-questions".
+ */
+export interface PlacementQuestion {
+  id: number;
+  topic: string;
+  question: string;
+  answers: {
+    answer: string;
+    id?: string | null;
+  }[];
+  correctAnswerIndex: number;
+  hint?: string | null;
+  explanation?: string | null;
+  difficulty?: ('de' | 'trung-binh' | 'kho') | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schedules".
+ */
+export interface Schedule {
+  id: number;
+  title: string;
+  course: number | Course;
+  startDate: string;
+  scheduleDetails?: string | null;
+  location?: (number | null) | Branch;
+  maxStudents?: number | null;
+  currentStudents?: number | null;
+  status: 'sap-mo' | 'dang-mo' | 'da-day';
+  createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -644,12 +707,32 @@ export interface Submission {
   id: number;
   fullName: string;
   phone: string;
-  email: string;
+  email?: string | null;
   message?: string | null;
   interestedCourse?: (number | null) | Course;
+  scheduleId?: (number | null) | Schedule;
   branch?: (number | null) | Branch;
   processStatus?: ('moi' | 'da-lien-he' | 'da-tu-van' | 'dong') | null;
   website?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: number;
+  studentName: string;
+  studentPhone: string;
+  studentEmail?: string | null;
+  exam: number | Exam;
+  amount: number;
+  paymentMethod: 'chuyen-khoan' | 'vietqr' | 'khac';
+  transferNote?: string | null;
+  paymentProof?: (number | null) | Media;
+  status: 'cho-xac-nhan' | 'da-thanh-toan' | 'tu-choi' | 'da-mo-khoa';
+  verifiedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -706,6 +789,14 @@ export interface PayloadLockedDocument {
         value: number | Exam;
       } | null)
     | ({
+        relationTo: 'placement-questions';
+        value: number | PlacementQuestion;
+      } | null)
+    | ({
+        relationTo: 'schedules';
+        value: number | Schedule;
+      } | null)
+    | ({
         relationTo: 'branches';
         value: number | Branch;
       } | null)
@@ -728,6 +819,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'submissions';
         value: number | Submission;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: number | Transaction;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -896,7 +991,9 @@ export interface DocumentsSelect<T extends boolean = true> {
   status?: T;
   publishedAt?: T;
   type?: T;
+  level?: T;
   grade?: T;
+  category?: T;
   subject?: T;
   year?: T;
   featuredImage?: T;
@@ -955,6 +1052,25 @@ export interface ExamsSelect<T extends boolean = true> {
   slug?: T;
   status?: T;
   publishedAt?: T;
+  level?: T;
+  grade?: T;
+  category?: T;
+  isPremium?: T;
+  price?: T;
+  durationMinutes?: T;
+  examContent?:
+    | T
+    | {
+        question?: T;
+        answers?:
+          | T
+          | {
+              answer?: T;
+              id?: T;
+            };
+        correctIndex?: T;
+        id?: T;
+      };
   featuredImage?: T;
   year?: T;
   audience?: T;
@@ -984,6 +1100,44 @@ export interface ExamsSelect<T extends boolean = true> {
         metaDescription?: T;
         shareImage?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "placement-questions_select".
+ */
+export interface PlacementQuestionsSelect<T extends boolean = true> {
+  topic?: T;
+  question?: T;
+  answers?:
+    | T
+    | {
+        answer?: T;
+        id?: T;
+      };
+  correctAnswerIndex?: T;
+  hint?: T;
+  explanation?: T;
+  difficulty?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schedules_select".
+ */
+export interface SchedulesSelect<T extends boolean = true> {
+  title?: T;
+  course?: T;
+  startDate?: T;
+  scheduleDetails?: T;
+  location?: T;
+  maxStudents?: T;
+  currentStudents?: T;
+  status?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1203,9 +1357,28 @@ export interface SubmissionsSelect<T extends boolean = true> {
   email?: T;
   message?: T;
   interestedCourse?: T;
+  scheduleId?: T;
   branch?: T;
   processStatus?: T;
   website?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  studentName?: T;
+  studentPhone?: T;
+  studentEmail?: T;
+  exam?: T;
+  amount?: T;
+  paymentMethod?: T;
+  transferNote?: T;
+  paymentProof?: T;
+  status?: T;
+  verifiedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1269,6 +1442,11 @@ export interface SiteSetting {
     metaTitle?: string | null;
     metaDescription?: string | null;
     shareImage?: (number | null) | Media;
+  };
+  bankInfo: {
+    bankId: string;
+    accountNo: string;
+    accountName: string;
   };
   footerContent?: {
     root: {
@@ -1391,6 +1569,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         metaTitle?: T;
         metaDescription?: T;
         shareImage?: T;
+      };
+  bankInfo?:
+    | T
+    | {
+        bankId?: T;
+        accountNo?: T;
+        accountName?: T;
       };
   footerContent?: T;
   notificationPopup?:

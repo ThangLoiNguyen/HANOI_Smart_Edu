@@ -38,11 +38,17 @@ export function DocumentCard({ document }: { document: Document }) {
       <div className="p-5">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
-            {DOCUMENTS_LABELS.types[document.type]}
+              {DOCUMENTS_LABELS.levels[document.level]}
           </span>
           <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">
             {DOCUMENTS_LABELS.grades[document.grade]}
           </span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+              {DOCUMENTS_LABELS.taxonomyCategories[document.category]}
+            </span>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">
+              {DOCUMENTS_LABELS.types[document.type]}
+            </span>
         </div>
         <h2 className="mt-4 text-lg font-extrabold leading-snug text-blue-950">
           {document.title}

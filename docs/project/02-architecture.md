@@ -11,12 +11,13 @@
 |---|---|
 | posts, courses, admissions, achievements, exams, albums | trang chi tiết, trang danh sách của mục đó, trang chủ |
 | documents | /tai-lieu |
+| schedules | /khoa-hoc/[slug] |
 | pages | trang đó |
 | homepage | trang chủ |
 | siteSettings, navigation, branches | toàn site (header, footer, trang cơ sở) |
 
 ## Quy ước tag
-- `posts`, `post:{slug}` — tương tự cho mọi collection.
+- `posts`, `post:{slug}` — tương tự cho mọi collection; `schedules` dùng tag collection để làm mới các trang khóa học liên quan.
 - `homepage`, `site` (header/footer), `branches`.
 - `afterDelete` **cũng phải revalidate** (bài biến mất khỏi list + sitemap).
 

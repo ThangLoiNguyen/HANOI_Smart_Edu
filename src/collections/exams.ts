@@ -12,6 +12,17 @@ import { publishedAtField } from '@/lib/fields/published-at-field'
 import { seoField } from '@/lib/fields/seo-field'
 import { slugField } from '@/lib/fields/slug-field'
 import { statusField } from '@/lib/fields/status-field'
+import {
+  DOCUMENT_CATEGORY_OPTIONS,
+  DOCUMENT_GRADE_OPTIONS,
+  DOCUMENT_LEVELS,
+  getDocumentTaxonomySiblingData,
+  getDocumentCategories,
+  getDocumentGradeValues,
+  isValidDocumentCategory,
+  type DocumentCategory,
+  type DocumentGrade,
+} from '@/lib/document-taxonomy'
 import { revalidateCollection } from '@/lib/revalidate'
 
 type StaffUser = { id: number | string; role: 'admin' | 'editor' }
@@ -74,7 +85,7 @@ const revalidateDeletedExam: CollectionAfterDeleteHook<ExamDocument> = ({ doc })
 const Exams: CollectionConfig = {
   slug: 'exams',
   admin: {
-    defaultColumns: ['title', 'year', 'examStatus', 'status'],
+    defaultColumns: ['title', 'level', 'grade', 'category', 'isPremium', 'year', 'status'],
     group: FIELD_LABELS.exams.adminGroup,
     preview: (doc) => {
       if (typeof doc.slug !== 'string' || !doc.slug) return null
@@ -109,6 +120,153 @@ const Exams: CollectionConfig = {
             slugField,
             statusField,
             publishedAtField,
+            {
+              name: 'level',
+              type: 'select',
+              label: FIELD_LABELS.exams.level,
+              required: true,
+              options: DOCUMENT_LEVELS.map(({ label, value }) => ({ label, value })),
+            },
+            {
+              name: 'grade',
+              type: 'select',
+              label: FIELD_LABELS.exams.grade,
+              required: true,
+              options: DOCUMENT_GRADE_OPTIONS,
+              filterOptions: ({ options, siblingData }) => {
+                const validGrades = getDocumentGradeValues(siblingData.level)
+                return options.filter((option) =>
+                  validGrades.includes(
+                    (typeof option === 'string' ? option : option.value) as DocumentGrade,
+                  ),
+                )
+              },
+              validate: (
+                value: string | null | undefined,
+                options: { siblingData: unknown },
+              ) => {
+                const { level } = getDocumentTaxonomySiblingData(options.siblingData)
+                return (
+                  value == null ||
+                  getDocumentGradeValues(level).includes(value as DocumentGrade) ||
+                  FIELD_LABELS.exams.invalidGrade
+                )
+              },
+            },
+            {
+              name: 'category',
+              type: 'select',
+              label: FIELD_LABELS.exams.category,
+              required: true,
+              options: DOCUMENT_CATEGORY_OPTIONS,
+              filterOptions: ({ options, siblingData }) => {
+                if (!siblingData.level || !siblingData.grade) return []
+                const validCategories = getDocumentCategories(siblingData.level, siblingData.grade)
+                return options.filter((option) =>
+                  validCategories.includes(
+                    (typeof option === 'string' ? option : option.value) as DocumentCategory,
+                  ),
+                )
+              },
+              validate: (
+                value: string | null | undefined,
+                options: { siblingData: unknown },
+              ) => {
+                const { level, grade } = getDocumentTaxonomySiblingData(options.siblingData)
+                return (
+                  value == null ||
+                  isValidDocumentCategory(level, grade, value) ||
+                  FIELD_LABELS.exams.invalidCategory
+                )
+              },
+            },
+            {
+              name: 'isPremium',
+              type: 'checkbox',
+              label: FIELD_LABELS.exams.isPremium,
+              defaultValue: false,
+            },
+            {
+              name: 'price',
+              type: 'number',
+              label: FIELD_LABELS.exams.price,
+              min: 0,
+              admin: {
+                condition: (_data, siblingData) => {
+                  const premiumValue =
+                    typeof siblingData === 'object' && siblingData !== null && 'isPremium' in siblingData
+                      ? siblingData.isPremium
+                      : false
+                  return Boolean(premiumValue)
+                },
+              },
+              validate: (value: number | null | undefined, options: { siblingData: unknown }) => {
+                const premiumValue =
+                  typeof options.siblingData === 'object' &&
+                  options.siblingData !== null &&
+                  'isPremium' in options.siblingData
+                    ? options.siblingData.isPremium
+                    : false
+
+                if (!premiumValue) return true
+                return typeof value === 'number' && value >= 0
+                  ? true
+                  : FIELD_LABELS.exams.invalidPrice
+              },
+            },
+            {
+              name: 'durationMinutes',
+              type: 'number',
+              label: FIELD_LABELS.exams.durationMinutes,
+              defaultValue: 45,
+              min: 1,
+              validate: (value: number | null | undefined) =>
+                value == null || (Number.isInteger(value) && value > 0) || FIELD_LABELS.exams.invalidDuration,
+            },
+            {
+              name: 'examContent',
+              type: 'array',
+              label: FIELD_LABELS.exams.examContent,
+              access: {
+                read: ({ req }) => isStaffUser(req.user),
+              },
+              fields: [
+                {
+                  name: 'question',
+                  type: 'textarea',
+                  label: FIELD_LABELS.exams.question,
+                  required: true,
+                },
+                {
+                  name: 'answers',
+                  type: 'array',
+                  label: FIELD_LABELS.exams.answers,
+                  minRows: 4,
+                  maxRows: 4,
+                  required: true,
+                  fields: [
+                    {
+                      name: 'answer',
+                      type: 'text',
+                      label: FIELD_LABELS.exams.answer,
+                      required: true,
+                    },
+                  ],
+                },
+                {
+                  name: 'correctIndex',
+                  type: 'select',
+                  label: FIELD_LABELS.exams.correctAnswer,
+                  required: true,
+                  options: [
+                    { label: 'A', value: '0' },
+                    { label: 'B', value: '1' },
+                    { label: 'C', value: '2' },
+                    { label: 'D', value: '3' },
+                  ],
+                },
+              ],
+            },
             {
               name: 'featuredImage',
               type: 'relationship',
