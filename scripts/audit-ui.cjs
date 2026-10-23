@@ -1,5 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
+require('dotenv').config({ path: path.join(process.cwd(), '.env.local') })
+const { Client } = require('pg')
 const { chromium, expect } = require('@playwright/test')
 
 const BASE_URL = process.env.AUDIT_BASE_URL || 'http://localhost:3000'
@@ -13,6 +15,7 @@ const ROUTES = [
   '/tai-lieu',
   '/co-so',
   '/gioi-thieu',
+  '/lien-he',
   { path: '/khoa-hoc', detail: '/khoa-hoc/toan-10-co-ban' },
   { path: '/tuyen-sinh', detail: '/tuyen-sinh/tuyen-sinh-he-2026' },
   { path: '/thanh-tich', detail: '/thanh-tich/nguyen-mai-anh-giai-nhat-toan' },
@@ -158,6 +161,14 @@ async function auditRoute(browser, route, viewport) {
             height: rect.height,
           }
         })
+      const contactForm = document.querySelector('form')
+      const contactFields = contactForm
+        ? [...contactForm.querySelectorAll('input[name="fullName"], input[name="phone"], input[name="email"], textarea[name="message"]')]
+            .filter(visible)
+            .map((field) => field.name)
+        : []
+      const honeypot = contactForm?.querySelector('input[name="website"]')
+      const submitButton = contactForm?.querySelector('button[type="submit"]')
 
       return {
         documentWidth,
@@ -165,6 +176,20 @@ async function auditRoute(browser, route, viewport) {
         gridTemplate: primaryGrid ? getComputedStyle(primaryGrid).gridTemplateColumns : null,
         images,
         buttons,
+        contact: contactForm
+          ? {
+              fields: contactFields,
+              honeypotValid: Boolean(
+                honeypot &&
+                  honeypot.tabIndex === -1 &&
+                  honeypot.getAttribute('aria-hidden') === 'true' &&
+                  getComputedStyle(honeypot).position === 'absolute' &&
+                  Number.parseFloat(getComputedStyle(honeypot).left) <= -1000,
+              ),
+              submitHeight: submitButton?.getBoundingClientRect().height ?? 0,
+              formTemplate: getComputedStyle(contactForm).gridTemplateColumns,
+            }
+          : null,
       }
     })
 
@@ -179,6 +204,40 @@ async function auditRoute(browser, route, viewport) {
       missingSizes: metrics.images.filter(
         (image) => !image.sizes && !image.src.startsWith('data:'),
       ),
+    }
+    if (route === '/lien-he') {
+      const contact = metrics.contact
+        ? { ...metrics.contact, formColumns: countGridTracks(metrics.contact.formTemplate) }
+        : null
+      const expectedFields = ['fullName', 'phone', 'email', 'message']
+      if (
+        !contact ||
+        expectedFields.some((field) => !contact.fields.includes(field))
+      ) {
+        failures.push({
+          check: `${route} (${entry.viewport}) visible contact fields`,
+          error: 'Expected visible fullName, phone, email, and message fields',
+        })
+      }
+      if (!contact?.honeypotValid) {
+        failures.push({
+          check: `${route} (${entry.viewport}) honeypot accessibility`,
+          error: 'Honeypot must be off-screen, aria-hidden, and have tabIndex=-1',
+        })
+      }
+      if ((contact?.submitHeight ?? 0) < 44) {
+        failures.push({
+          check: `${route} (${entry.viewport}) submit button minimum height`,
+          error: `Expected at least 44px, got ${contact?.submitHeight ?? 0}px`,
+        })
+      }
+      const expectedFormColumns = viewport.width < 640 ? 1 : 2
+      if (contact?.formColumns !== expectedFormColumns) {
+        failures.push({
+          check: `${route} (${entry.viewport}) form columns`,
+          error: `expected ${expectedFormColumns}, got ${contact?.formColumns ?? 0}`,
+        })
+      }
     }
     if (viewport.width === 375) {
       entry.mobileButtonCount = metrics.buttons.length
@@ -272,6 +331,126 @@ async function auditLightbox(page) {
   })
 }
 
+async function auditContactForm(browser) {
+  const database = new Client({
+    connectionString: process.env.DATABASE_URI_UNPOOLED || process.env.DATABASE_URI,
+  })
+  const auditEmail = `p20b-audit-${process.pid}-${Date.now()}@invalid.example`
+  let connected = false
+  try {
+    await database.connect()
+    connected = true
+    const countResult = await database.query(`
+      SELECT
+        (SELECT count(*)::int FROM submissions) AS submissions,
+        (SELECT count(*)::int FROM courses WHERE status = 'published') AS courses,
+        (SELECT count(*)::int FROM branches WHERE status = 'published') AS branches
+    `)
+    const initialCounts = countResult.rows[0]
+    await check('contact seed data exists', async () => {
+      expect(initialCounts.courses, 'published courses should be available').toBeGreaterThan(0)
+      expect(initialCounts.branches, 'published branches should be available').toBeGreaterThan(0)
+    })
+
+    const unauthenticated = await fetch(new URL('/api/submissions?limit=1', BASE_URL))
+    await check('public submissions read is denied', async () => {
+      expect([401, 403], 'public API must deny access').toContain(unauthenticated.status)
+    })
+
+    const baseline = initialCounts.submissions
+    const validContext = await browser.newContext({
+      extraHTTPHeaders: { 'x-forwarded-for': '198.51.100.10' },
+      viewport: VIEWPORTS[0],
+    })
+    const validPage = await validContext.newPage()
+    await validPage.goto(new URL('/lien-he', BASE_URL).toString(), { waitUntil: 'domcontentloaded' })
+    await fillContactForm(validPage, auditEmail)
+    await validPage.getByRole('button', { name: 'Gửi liên hệ' }).click()
+    await check('contact valid submit succeeds', async () => {
+      await expect(validPage.getByRole('status')).toHaveText(
+        'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong 24h.',
+        { timeout: 10_000 },
+      )
+    })
+    const afterValid = await countSubmissions(database)
+    await check('contact valid submit creates one record', async () => {
+      expect(afterValid).toBe(baseline + 1)
+    })
+
+    await validPage.locator('input[name="website"]').evaluate((input) => {
+      input.value = 'filled-by-a-bot'
+    })
+    await fillContactForm(validPage, auditEmail)
+    await validPage.getByRole('button', { name: 'Gửi liên hệ' }).click()
+    await check('contact honeypot is silently rejected', async () => {
+      await expect(validPage.locator('form [role="alert"]')).toBeVisible({ timeout: 10_000 })
+      await expect(validPage.locator('form [role="alert"]')).toHaveText(
+        'Không thể gửi yêu cầu lúc này. Vui lòng thử lại sau.',
+      )
+    })
+    const afterHoneypot = await countSubmissions(database)
+    await check('contact honeypot does not create a record', async () => {
+      expect(afterHoneypot).toBe(afterValid)
+    })
+    await validContext.close()
+
+    const rateContext = await browser.newContext({
+      extraHTTPHeaders: { 'x-forwarded-for': '198.51.100.11' },
+      viewport: VIEWPORTS[0],
+    })
+    const ratePage = await rateContext.newPage()
+    await ratePage.goto(new URL('/lien-he', BASE_URL).toString(), { waitUntil: 'domcontentloaded' })
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      await fillContactForm(ratePage, auditEmail)
+      await ratePage.getByRole('button', { name: 'Gửi liên hệ' }).click()
+      if (attempt < 4) {
+        await check(`contact rate limit request ${attempt} succeeds`, async () => {
+          await expect(ratePage.getByRole('status')).toHaveText(
+            'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong 24h.',
+            { timeout: 10_000 },
+          )
+        })
+      } else {
+        await check('contact rate limit request four is rejected', async () => {
+          await expect(ratePage.locator('form [role="alert"]')).toHaveText(
+            'Bạn đã gửi quá nhiều. Vui lòng thử lại sau 10 phút.',
+            { timeout: 10_000 },
+          )
+        })
+      }
+    }
+    await rateContext.close()
+
+    const afterRateLimit = await countSubmissions(database)
+    await check('contact rate limit stores only first three requests', async () => {
+      expect(afterRateLimit).toBe(baseline + 4)
+    })
+    console.log(
+      `Contact form tests: valid ${baseline}→${afterValid}, honeypot ${afterHoneypot}, ` +
+        `rate-limit ${afterRateLimit} (3 of 4 requests stored). Public read HTTP ${unauthenticated.status}.`,
+    )
+  } finally {
+    if (connected) {
+      await database.query('DELETE FROM submissions WHERE email = $1', [auditEmail])
+      const finalCount = await countSubmissions(database)
+      console.log(`Contact test records cleaned up; submissions count restored to ${finalCount}.`)
+      await database.end()
+    }
+  }
+}
+
+async function fillContactForm(page, email) {
+  await page.locator('input[name="fullName"]').fill('P20b audit contact')
+  await page.locator('input[name="phone"]').fill('0912345678')
+  await page.locator('input[name="email"]').fill(email)
+  await page.locator('textarea[name="message"]').fill('Automated contact form verification.')
+}
+
+async function countSubmissions(database) {
+  const result = await database.query('SELECT count(*)::int AS count FROM submissions')
+  return result.rows[0].count
+}
+
 async function main() {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true })
   const browser = await chromium.launch({ headless: true })
@@ -282,6 +461,7 @@ async function main() {
         await auditRoute(browser, route, viewport)
       }
     }
+    await auditContactForm(browser)
   } finally {
     await browser.close()
   }
