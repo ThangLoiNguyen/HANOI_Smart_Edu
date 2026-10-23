@@ -30,3 +30,6 @@
 - [ ] TD-08: Public read submissions Ä‘Ã£ cháº·n (403) â€” verify thÃªm khi deploy
       production vá»›i env tháº­t.
 - [ ] TD-09: 404 custom dùng experimental.globalNotFound. Theo dõi Next.js changelog khi upgrade. Fallback: [catchAll]/page.tsx v?i notFound() n?u feature b? b?.
+
+- [ ] TD-10: Vercel Blob store không t?n t?i ? local dev — upload test fail 500. Trên production có BLOB_READ_WRITE_TOKEN th?t ? s? pass. C?n test upload th?t khi deploy preview (P24).
+- [ ] TD-11: payload.config.ts có cast sharp do mismatch version (sharp@0.35.5 direct vs Payload expects sharp@0.34.5). Khi upgrade Payload, ki?m tra l?i cast còn c?n không.
