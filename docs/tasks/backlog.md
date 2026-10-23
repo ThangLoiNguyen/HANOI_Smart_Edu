@@ -18,3 +18,14 @@
 - Kết quả: title mới xuất hiện ở cả `/tin-tuc/[slug]` (metadata `<title>`) và `/tin-tuc` (HTML list).
 - Kết luận: tag-based revalidate chain (collection hook → payload helper → revalidate helper) hoạt động đúng spec.
 - Script: `scripts/seed-test.cjs` (idempotent, có thể chạy lại).
+
+## Tech debt — dọn sau
+- [ ] TD-05: /gioi-thieu thiếu imageBlock — seed P20a không include. Fix ở P23
+      cleanup demo (thêm imageBlock vào seed data page 'gioi-thieu').
+- [ ] TD-06: siteName trong DB vẫn "HANOI SMART EDU" thay vì "Trung tâm Hà Nội
+      Smart Edu". Seed hiện không force update nếu record đã tồn tại. Fix ở P23
+      (thêm logic upsert trong seed hoặc xóa record rồi seed lại).
+- [ ] TD-07: Rate limit Map in-memory ở submit-contact.ts. Production nhiều
+      instance → không chính xác. Cần Upstash Redis/Vercel KV trước khi deploy.
+- [ ] TD-08: Public read submissions đã chặn (403) — verify thêm khi deploy
+      production với env thật.
