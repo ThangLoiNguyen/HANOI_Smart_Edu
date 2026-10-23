@@ -83,6 +83,15 @@ const Achievements: CollectionConfig = {
       'status',
     ],
     group: FIELD_LABELS.achievements.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'achievements',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'studentName',
   },
   access: {

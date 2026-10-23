@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { formatAlbumDate } from '@/components/albums/album-card'
 import { PhotoGallery } from '@/components/albums/photo-gallery'
 import { FIELD_LABELS } from '@/lib/fields/labels'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug } from '@/lib/payload'
 import type { Album, Media, Post } from '@/payload-types'
@@ -29,7 +31,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: AlbumPageProps): Promise<Metadata> {
   const { slug } = await params
-  const album = await findOneBySlug('albums', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const album = isDraft
+    ? await findDraftBySlug('albums', slug)
+    : await findOneBySlug('albums', slug)
   if (!album) notFound()
 
   const cover = isMedia(album.cover) ? album.cover : album.photos?.[0]?.image
@@ -43,7 +48,10 @@ export async function generateMetadata({ params }: AlbumPageProps): Promise<Meta
 
 export default async function AlbumDetailPage({ params }: AlbumPageProps) {
   const { slug } = await params
-  const album = await findOneBySlug('albums', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const album = isDraft
+    ? await findDraftBySlug('albums', slug)
+    : await findOneBySlug('albums', slug)
   if (!album) notFound()
   const events = album.relatedEvent?.filter(isPost) ?? []
 

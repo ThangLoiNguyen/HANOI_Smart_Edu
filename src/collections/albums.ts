@@ -70,6 +70,15 @@ const Albums: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'takenAt', 'status'],
     group: FIELD_LABELS.albums.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'albums',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   access: {

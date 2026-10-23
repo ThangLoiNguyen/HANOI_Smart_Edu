@@ -175,3 +175,8 @@ export const SEO_LABELS = {
   homeButton: 'Về trang chủ',
   newsButton: 'Xem tin tức',
 } as const
+
+export const PREVIEW_BANNER_LABELS = {
+  message: 'Đang xem trước — Đây là bản nháp.',
+  exit: 'Thoát',
+} as const

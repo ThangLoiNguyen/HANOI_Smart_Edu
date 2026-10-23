@@ -1,10 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { CourseCard, formatTuition, gradeLabel, subjectLabels } from '@/components/courses/course-card'
 import { RichText } from '@/components/layout/rich-text'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug, findPublished } from '@/lib/payload'
 import type { Branch, Course, Document, Media } from '@/payload-types'
@@ -33,7 +35,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: CoursePageProps): Promise<Metadata> {
   const { slug } = await params
-  const course = await findOneBySlug('courses', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const course = isDraft
+    ? await findDraftBySlug('courses', slug)
+    : await findOneBySlug('courses', slug)
   if (!course) notFound()
 
   return buildMetadata({
@@ -46,7 +51,10 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
 
 export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { slug } = await params
-  const course = await findOneBySlug('courses', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const course = isDraft
+    ? await findDraftBySlug('courses', slug)
+    : await findOneBySlug('courses', slug)
   if (!course) notFound()
 
   const relatedResult = await findPublished('courses', {

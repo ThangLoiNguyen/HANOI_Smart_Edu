@@ -1,11 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { PostCard } from '@/components/posts/post-card'
 import { TypeBadge } from '@/components/posts/type-badge'
 import { RichText } from '@/components/layout/rich-text'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { POSTS_LABELS } from '@/lib/labels'
 import { buildMetadata, buildStaticParams, getSiteSettings } from '@/lib/metadata'
 import { findOneBySlug, findPublished } from '@/lib/payload'
@@ -55,7 +57,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params
-  const post = await findOneBySlug('posts', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const post = isDraft
+    ? await findDraftBySlug('posts', slug)
+    : await findOneBySlug('posts', slug)
   if (!post) notFound()
 
   return buildMetadata({
@@ -68,7 +73,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
 export default async function PostDetailPage({ params }: PostPageProps) {
   const { slug } = await params
-  const post = await findOneBySlug('posts', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const post = isDraft
+    ? await findDraftBySlug('posts', slug)
+    : await findOneBySlug('posts', slug)
   if (!post) notFound()
 
   const [siteSettings, relatedResult] = await Promise.all([

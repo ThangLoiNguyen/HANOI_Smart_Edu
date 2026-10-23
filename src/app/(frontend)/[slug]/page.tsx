@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { BlockRenderer } from '@/components/pages/block-renderer'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { PAGES_LABELS } from '@/lib/labels'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug } from '@/lib/payload'
@@ -21,7 +23,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   if (slug === PAGES_LABELS.contactSlug) notFound()
 
-  const page = await findOneBySlug('pages', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const page = isDraft
+    ? await findDraftBySlug('pages', slug)
+    : await findOneBySlug('pages', slug)
   if (!page) notFound()
 
   return buildMetadata({
@@ -36,7 +41,10 @@ export default async function ContentPage({ params }: PageProps) {
   const { slug } = await params
   if (slug === PAGES_LABELS.contactSlug) notFound()
 
-  const page = await findOneBySlug('pages', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const page = isDraft
+    ? await findDraftBySlug('pages', slug)
+    : await findOneBySlug('pages', slug)
   if (!page) notFound()
 
   return (

@@ -1,11 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { AdmissionStatusBadge } from '@/components/admissions/admission-status-badge'
 import { formatDate } from '@/components/admissions/admission-card'
 import { RichText } from '@/components/layout/rich-text'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug } from '@/lib/payload'
 import type { Admission, Course, Media } from '@/payload-types'
@@ -30,7 +32,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: AdmissionPageProps): Promise<Metadata> {
   const { slug } = await params
-  const admission = await findOneBySlug('admissions', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const admission = isDraft
+    ? await findDraftBySlug('admissions', slug)
+    : await findOneBySlug('admissions', slug)
   if (!admission) notFound()
 
   return buildMetadata({
@@ -43,7 +48,10 @@ export async function generateMetadata({ params }: AdmissionPageProps): Promise<
 
 export default async function AdmissionDetailPage({ params }: AdmissionPageProps) {
   const { slug } = await params
-  const admission = await findOneBySlug('admissions', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const admission = isDraft
+    ? await findDraftBySlug('admissions', slug)
+    : await findOneBySlug('admissions', slug)
   if (!admission) notFound()
 
   const image = isMedia(admission.featuredImage) ? admission.featuredImage : null

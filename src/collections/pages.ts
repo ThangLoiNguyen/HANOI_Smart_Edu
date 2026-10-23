@@ -135,6 +135,15 @@ const Pages: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'slug', 'status', 'updatedAt'],
     group: FIELD_LABELS.pages.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'pages',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   access: {

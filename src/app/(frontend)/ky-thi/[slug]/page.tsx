@@ -1,11 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ExamStatusBadge } from '@/components/exams/exam-status-badge'
 import { formatDate } from '@/components/exams/exam-card'
 import { RichText } from '@/components/layout/rich-text'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug } from '@/lib/payload'
 import type { Document, Exam, Media } from '@/payload-types'
@@ -30,7 +32,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ExamPageProps): Promise<Metadata> {
   const { slug } = await params
-  const exam = await findOneBySlug('exams', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const exam = isDraft
+    ? await findDraftBySlug('exams', slug)
+    : await findOneBySlug('exams', slug)
   if (!exam) notFound()
 
   return buildMetadata({
@@ -43,7 +48,10 @@ export async function generateMetadata({ params }: ExamPageProps): Promise<Metad
 
 export default async function ExamDetailPage({ params }: ExamPageProps) {
   const { slug } = await params
-  const exam = await findOneBySlug('exams', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const exam = isDraft
+    ? await findDraftBySlug('exams', slug)
+    : await findOneBySlug('exams', slug)
   if (!exam) notFound()
 
   const image = isMedia(exam.featuredImage) ? exam.featuredImage : null

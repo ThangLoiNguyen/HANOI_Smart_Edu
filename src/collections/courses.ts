@@ -80,6 +80,15 @@ const Courses: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'grade', 'subject', 'duration', 'status'],
     group: FIELD_LABELS.courses.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'courses',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   access: {

@@ -76,6 +76,15 @@ const Exams: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'year', 'examStatus', 'status'],
     group: FIELD_LABELS.exams.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'exams',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   access: {

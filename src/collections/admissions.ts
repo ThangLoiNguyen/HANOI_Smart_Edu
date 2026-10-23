@@ -76,6 +76,15 @@ const Admissions: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'deadline', 'admissionStatus', 'status'],
     group: FIELD_LABELS.admissions.adminGroup,
+    preview: (doc) => {
+      if (typeof doc.slug !== 'string' || !doc.slug) return null
+      const params = new URLSearchParams({
+        collection: 'admissions',
+        slug: doc.slug,
+        secret: process.env.PREVIEW_SECRET ?? '',
+      })
+      return `/api/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   access: {

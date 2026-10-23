@@ -1,9 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { FIELD_LABELS } from '@/lib/fields/labels'
+import { findDraftBySlug } from '@/lib/draft-preview'
 import { buildMetadata, buildStaticParams } from '@/lib/metadata'
 import { findOneBySlug } from '@/lib/payload'
 import type { Achievement, Media } from '@/payload-types'
@@ -24,7 +26,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: AchievementPageProps): Promise<Metadata> {
   const { slug } = await params
-  const achievement = await findOneBySlug('achievements', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const achievement = isDraft
+    ? await findDraftBySlug('achievements', slug)
+    : await findOneBySlug('achievements', slug)
   if (!achievement) notFound()
 
   return buildMetadata({
@@ -40,7 +45,10 @@ export async function generateMetadata({ params }: AchievementPageProps): Promis
 
 export default async function AchievementDetailPage({ params }: AchievementPageProps) {
   const { slug } = await params
-  const achievement = await findOneBySlug('achievements', slug)
+  const { isEnabled: isDraft } = await draftMode()
+  const achievement = isDraft
+    ? await findDraftBySlug('achievements', slug)
+    : await findOneBySlug('achievements', slug)
   if (!achievement) notFound()
   const image = isMedia(achievement.featuredImage) ? achievement.featuredImage : null
 

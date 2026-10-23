@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
 import { Be_Vietnam_Pro } from 'next/font/google'
 import type { ReactNode } from 'react'
 
 import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { NotificationPopup } from '@/components/layout/notification-popup'
+import { PreviewBanner } from '@/components/layout/preview-banner'
 import { LAYOUT_LABELS } from '@/lib/labels'
 import { getSiteSettings } from '@/lib/metadata'
 import { getGlobal } from '@/lib/payload'
@@ -37,7 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FrontendLayout({ children }: FrontendLayoutProps) {
-  const [settings, navigation] = await Promise.all([
+  const [{ isEnabled: isDraft }, settings, navigation] = await Promise.all([
+    draftMode(),
     getSiteSettings(),
     getGlobal<'navigation'>('navigation'),
   ])
@@ -56,6 +59,7 @@ export default async function FrontendLayout({ children }: FrontendLayoutProps) 
           {LAYOUT_LABELS.skipNavigation}
         </a>
         <Header menu={navigation.mainMenu ?? []} settings={settings} />
+        <PreviewBanner initialIsDraft={isDraft} />
         <main id="main-content">{children}</main>
         <Footer menu={navigation.footerMenu ?? []} settings={settings} />
         {popupIsCurrent && popup ? <NotificationPopup data={popup} /> : null}
