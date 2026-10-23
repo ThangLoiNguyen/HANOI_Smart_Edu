@@ -29,3 +29,4 @@
       instance → không chính xác. Cần Upstash Redis/Vercel KV trước khi deploy.
 - [ ] TD-08: Public read submissions đã chặn (403) — verify thêm khi deploy
       production với env thật.
+- [ ] TD-09: 404 custom d�ng experimental.globalNotFound. Theo d�i Next.js changelog khi upgrade. Fallback: [catchAll]/page.tsx v?i notFound() n?u feature b? b?.
