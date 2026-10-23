@@ -4,6 +4,7 @@ import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
+import sharp from 'sharp'
 
 import Admissions from '@/collections/admissions'
 import Achievements from '@/collections/achievements'
@@ -64,6 +65,8 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI ?? '',
     },
   }),
+  // Payload's SharpDependency resolves sharp 0.34.5 while the direct dependency is 0.35.5.
+  sharp: sharp as unknown as NonNullable<Parameters<typeof buildConfig>[0]['sharp']>,
   plugins: [
     // TODO: Replace with the S3 storage adapter if Cloudflare R2 is selected.
     vercelBlobStorage({
