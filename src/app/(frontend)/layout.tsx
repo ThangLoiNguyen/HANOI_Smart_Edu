@@ -27,6 +27,7 @@ type FrontendLayoutProps = {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings()
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'),
     title: settings.defaultSeo?.metaTitle || settings.siteName,
     description: settings.defaultSeo?.metaDescription || undefined,
     openGraph: {

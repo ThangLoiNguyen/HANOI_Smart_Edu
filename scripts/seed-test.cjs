@@ -336,6 +336,12 @@ const pages = [
   },
 ]
 
+const introductionImage = {
+  key: 'gioi-thieu',
+  alt: 'Cơ sở vật chất trung tâm',
+  caption: 'Cơ sở vật chất trung tâm',
+}
+
 const mediaDatabase = new Client({
   connectionString: process.env.DATABASE_URI_UNPOOLED || process.env.DATABASE_URI,
 })
@@ -580,16 +586,14 @@ async function ensurePlaceholderMedia(photo) {
 
 async function ensureSiteSettings() {
   const current = await request('/api/globals/siteSettings')
-  const exists = Boolean(current && typeof current === 'object' && current.siteName)
   const values = {
-    siteName: 'HANOI Smart Edu',
+    siteName: 'Trung tâm Hà Nội Smart Edu',
     defaultSeo: {
-      metaTitle: 'HANOI Smart Edu',
+      metaTitle: 'Trung tâm Hà Nội Smart Edu',
       metaDescription: 'Trung tâm luyện thi uy tín tại Hà Nội',
     },
   }
   const isCurrent =
-    exists &&
     current.siteName === values.siteName &&
     current.defaultSeo?.metaTitle === values.defaultSeo.metaTitle &&
     current.defaultSeo?.metaDescription === values.defaultSeo.metaDescription
@@ -699,9 +703,35 @@ async function seedBranches() {
 }
 
 async function seedPages() {
+  if (!mediaDatabaseConnected) {
+    await mediaDatabase.connect()
+    mediaDatabaseConnected = true
+  }
+
+  const existingMedia = await mediaDatabase.query('SELECT id FROM media LIMIT 1')
+  const media = existingMedia.rowCount
+    ? await request(`/api/media/${existingMedia.rows[0].id}`)
+    : await ensurePlaceholderMedia(introductionImage)
+
   const saved = []
   for (const page of pages) {
-    saved.push(await ensureRecord('pages', page))
+    if (page.slug !== 'gioi-thieu') {
+      saved.push(await ensureRecord('pages', page))
+      continue
+    }
+
+    const layout = page.layout.filter((block) => block.blockType !== 'imageBlock')
+    const textBlockIndex = layout.findIndex((block) => block.blockType === 'textBlock')
+    if (textBlockIndex < 0) {
+      throw new Error('The gioi-thieu page seed requires a textBlock before its imageBlock')
+    }
+
+    layout.splice(textBlockIndex + 1, 0, {
+      blockType: 'imageBlock',
+      image: media.id,
+      caption: introductionImage.caption,
+    })
+    saved.push(await ensureRecord('pages', { ...page, layout }))
   }
   return saved
 }
